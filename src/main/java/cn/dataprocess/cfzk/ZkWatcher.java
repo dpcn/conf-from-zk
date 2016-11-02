@@ -62,7 +62,7 @@ public class ZkWatcher<T> implements TreeCacheListener {
     }
 
     public void init() throws KeeperException, InterruptedException, IOException, Exception {
-        Object nmap = ZkWatherUtil.fromZkChild(this.zkclient, this.path, ENCODE);
+        Object nmap = ZkWatherUtil.fromZkChildMain(this.zkclient, this.path, ENCODE);
         String ns = JsonUtil.toJsonString(nmap);
         Object nob = JsonUtil.toJavaBean(ns, this.wob.getClass());
         T nt = (T) nob;
@@ -73,7 +73,7 @@ public class ZkWatcher<T> implements TreeCacheListener {
     }
 
     public void refresh() throws KeeperException, InterruptedException, IOException {
-        Object nmap = ZkWatherUtil.fromZkChild(this.treeCache, this.path, ENCODE);
+        Object nmap = ZkWatherUtil.fromZkChildMain(this.treeCache, this.path, ENCODE);
         String ns = JsonUtil.toJsonString(nmap);
         Object nob = JsonUtil.toJavaBean(ns, this.wob.getClass());
         T nt = (T) nob;
