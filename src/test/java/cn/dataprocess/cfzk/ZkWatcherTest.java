@@ -19,11 +19,11 @@ public class ZkWatcherTest implements Runnable {
     private final ConfigFromZk CFZK = ConfigFromZk.getInstance();
     TestBean wob = null;
 
-    public ZkWatcherTest(String hosts, int timeout, String path) throws IOException, KeeperException, InterruptedException, InstantiationException, IllegalAccessException {
+    public ZkWatcherTest(String hosts, int timeout, String path) throws IOException, KeeperException, InterruptedException, InstantiationException, IllegalAccessException, Exception {
         wob = CFZK.getConfig(hosts, path, TestBean.class);
     }
 
-    public static void main(String args[]) throws InterruptedException, IOException, KeeperException, InstantiationException, IllegalAccessException {
+    public static void main(String args[]) throws InterruptedException, IOException, KeeperException, InstantiationException, IllegalAccessException, Exception {
         String host = "192.168.2.215:2181,192.168.2.216:2181,192.168.2.217:2181";
         int timeout = 3000;
         String path = "/testzk";
@@ -33,7 +33,7 @@ public class ZkWatcherTest implements Runnable {
         th.start();
         while (true) {
             Thread.sleep(1000);
-            System.out.println(" ext tb=" + tb);
+             System.out.println(" ext tb=" + tb);
         }
     }
 

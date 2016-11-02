@@ -35,7 +35,7 @@ public class ConfigFromZk {
 
     private synchronized <T> void initConfig(ConfigBean cb, Class<T> valueType)
                 throws InstantiationException, IllegalAccessException,
-                IOException, KeeperException, InterruptedException {
+                IOException, KeeperException, InterruptedException, Exception {
         if (configPool.containsKey(cb)) {
             return;
         }
@@ -46,7 +46,7 @@ public class ConfigFromZk {
 
     public <T> T getConfig(String host, String path, Class<T> valueType)
                 throws InstantiationException, IllegalAccessException, KeeperException,
-                IOException, InterruptedException {
+                IOException, InterruptedException, Exception {
         T ret = null;
         ConfigBean cb = new ConfigBean(host, path, valueType);
         ZkWatcher zkw = configPool.get(cb);

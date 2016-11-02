@@ -30,14 +30,7 @@
             </plugin>
 </plugins>
 </build>
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.zookeeper</groupId>
-            <artifactId>zookeeper</artifactId>
-            <version>3.4.9</version>
-            <type>jar</type>
-        </dependency>
-         
+    <dependencies> 
         <dependency>
             <groupId>cglib</groupId>
             <artifactId>cglib</artifactId>
@@ -60,6 +53,18 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
             <version>1.2</version> 
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-framework</artifactId>
+            <version>2.10.0</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-recipes</artifactId>
+            <version>2.10.0</version>
+            <type>jar</type>
         </dependency>
     </dependencies>
 </project>

@@ -6,14 +6,21 @@
 package cn.dataprocess.cfzk;
 
 import java.io.IOException;
+import java.util.Map;
 import lombok.Data;
 import lombok.extern.apachecommons.CommonsLog;
 import net.sf.cglib.beans.BeanCopier;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.curator.framework.recipes.cache.*;
+import org.apache.zookeeper.Watcher.Event;
 
 /**
  *
@@ -22,69 +29,61 @@ import org.apache.zookeeper.ZooKeeper;
  */
 @CommonsLog
 @Data
-public class ZkWatcher<T> implements Watcher {
-    
+public class ZkWatcher<T> implements TreeCacheListener {
+
+    public static final String ENCODE = "UTF-8";
     private String hosts;
     private int timeout;
     private String path;
     private T wob;
-    protected ZooKeeper zooKeeper;
+    protected CuratorFramework zkclient = null;
     private BeanCopier copier = null;
+    private RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
+    private TreeCache treeCache = null;
 
-    public ZkWatcher(String hosts, int timeout, String path, T wob) throws IOException, KeeperException, InterruptedException {
+    public ZkWatcher(String hosts, int timeout, String path, T wob) throws IOException, KeeperException, InterruptedException, Exception {
         this.hosts = hosts;
         this.timeout = timeout;
         this.path = path;
         this.wob = wob;
         copier = BeanCopier.create(wob.getClass(), wob.getClass(), false);
-        zooKeeper = new ZooKeeper(hosts, timeout, this); 
-        ZkWatherUtil.watchChilds(zooKeeper, this, path);
-        refresh();
+        zkclient = CuratorFrameworkFactory.builder()
+                    .connectString(hosts)
+                    .sessionTimeoutMs(5000)
+                    .retryPolicy(retryPolicy)
+                    // .namespace(path)
+                    .build();
+        zkclient.start();
+        treeCache = new TreeCache(zkclient, path);
+        treeCache.getListenable().addListener(this);
+        treeCache.start();
+        log.debug("treeCache=" + treeCache);
+        init();
     }
 
-    public void refresh() throws KeeperException, InterruptedException, IOException {
-        Object nmap = ZkWatherUtil.fromZkChild(this.zooKeeper, this.path);
+    public void init() throws KeeperException, InterruptedException, IOException, Exception {
+        Object nmap = ZkWatherUtil.fromZkChild(this.zkclient, this.path, ENCODE);
         String ns = JsonUtil.toJsonString(nmap);
         Object nob = JsonUtil.toJavaBean(ns, this.wob.getClass());
         T nt = (T) nob;
-        copier.copy(nt, this.wob, null);
+        log.debug("nt=" + nt);
+        if (nt != null) {
+            copier.copy(nt, this.wob, null);
+        }
     }
-    
-    public void checkConnection(WatchedEvent event) throws IOException{
-        KeeperState zkstate = event.getState(); 
-         if( KeeperState.Expired ==  zkstate ) {
-             this.zooKeeper = new ZooKeeper(hosts, timeout, this);
-         }
-         else  if( KeeperState.Disconnected ==  zkstate ) {
-             this.zooKeeper = new ZooKeeper(hosts, timeout, this);
-         }
+
+    public void refresh() throws KeeperException, InterruptedException, IOException {
+        Object nmap = ZkWatherUtil.fromZkChild(this.treeCache, this.path, ENCODE);
+        String ns = JsonUtil.toJsonString(nmap);
+        Object nob = JsonUtil.toJavaBean(ns, this.wob.getClass());
+        T nt = (T) nob;
+        log.debug("nt=" + nt);
+        copier.copy(nt, this.wob, null);
     }
 
     @Override
-    public void process(WatchedEvent event) {
-        try {
-            checkConnection(event);
-        } catch (IOException ex) {
-            log.error(ex);
-        }
-        log.debug("event=" + event.getType());
-        Event.EventType eType = event.getType();
-        if (eType.equals(Event.EventType.None)) {
-            return;
-        }
-        //先判断路径
-        String cPath = event.getPath();
-        if (!cPath.contains(this.path)) {
-            return;
-        }
-        try {
-            checkConnection(event); 
-            //重新注册
-            ZkWatherUtil.watchChilds(zooKeeper, this, path);
-            refresh();
-        } catch (KeeperException | InterruptedException | IOException ex) {
-            log.error(ex);
-        }
+    public void childEvent(CuratorFramework client, TreeCacheEvent event) throws Exception {
+        refresh();
     }
 
 }
