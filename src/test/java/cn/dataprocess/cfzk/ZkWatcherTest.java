@@ -16,7 +16,7 @@ import org.apache.zookeeper.KeeperException;
 @CommonsLog
 public class ZkWatcherTest implements Runnable {
 
-    private ConfigFromZk CFZK = ConfigFromZk.getInstance();
+    private final ConfigFromZk CFZK = ConfigFromZk.getInstance();
     TestBean wob = null;
 
     public ZkWatcherTest(String hosts, int timeout, String path) throws IOException, KeeperException, InterruptedException, InstantiationException, IllegalAccessException {
