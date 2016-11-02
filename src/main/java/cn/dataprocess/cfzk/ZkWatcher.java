@@ -78,7 +78,9 @@ public class ZkWatcher<T> implements Watcher {
             return;
         }
         try {
-            checkConnection(event);
+            checkConnection(event); 
+            //重新注册
+            ZkWatherUtil.watchChilds(zooKeeper, this, path);
             refresh();
         } catch (KeeperException | InterruptedException | IOException ex) {
             log.error(ex);
